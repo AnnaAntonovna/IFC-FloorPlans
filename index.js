@@ -167,7 +167,7 @@ function toogleShadow(active){
   }
 }
 
-loadIfc('./01.ifc'); 
+loadIfc('./02.ifc'); 
 
 function togglePostProduction(active) {
   viewer.context.renderer.postProduction.active = active;
