@@ -16,6 +16,14 @@ async function loadIfc(url) {
 		// Load the model
     model = await viewer.IFC.loadIfcUrl(url);
 
+    // Setup camera controls
+    const controls = viewer.context.ifcCamera.cameraControls;
+    controls.setPosition(7.6, 4.3, 24.8, false);
+    controls.setTarget(-7.1, -0.3, 2.5, false);
+
+
+    await viewer.plans.computeAllPlanViews(model.modelID);
+
 		// Add dropped shadow and post-processing efect
     await viewer.shadowDropper.renderShadow(model.modelID);
 
@@ -23,7 +31,6 @@ async function loadIfc(url) {
     
     viewer.context.renderer.postProduction.active = true;
 
-    await viewer.plans.computeAllPlanViews(model.modelID);
 
     const lineMaterial = new LineBasicMaterial({color: "black"});
     const baseMaterial = new MeshBasicMaterial({
@@ -35,6 +42,7 @@ async function loadIfc(url) {
     viewer.edges.create("example", model.modelID, lineMaterial, baseMaterial);
 
     const container = document.getElementById('button-container');
+
     allPlans = viewer.plans.getAll(model.modelID);
 
     for (const plan of allPlans) {
@@ -63,12 +71,9 @@ async function loadIfc(url) {
     }
 
     //floor plan export
-    await setupFloorPlans();
-  }
+    viewer.dxf.initializeJSDXF(Drawing);
 
- async function setupFloorPlans(){ 
-
-  const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
+	const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
 	const storeys = ifcProject.children[0].children[0].children;
 	for (let storey of storeys) {
 		for (let child of storey.children) {
@@ -78,11 +83,7 @@ async function loadIfc(url) {
 		}
 	}
 
-  //console.log('current plan' + allPlans);
-
-  const container = document.getElementById('button-container');
-
-  for (const plan of allPlans) {
+	for (const plan of allPlans) {
 		const currentPlan = viewer.plans.planLists[model.modelID][plan];
 		console.log(currentPlan);
 
@@ -94,73 +95,70 @@ async function loadIfc(url) {
 			drawProjectedItems(storey, currentPlan, model.modelID);
 		};
 	}
+  }
 
   const dummySubsetMat = new MeshBasicMaterial({visible: false});
 
-async function drawProjectedItems(storey, plan, modelID) {
-
-	// Create a new drawing (if it doesn't exist)
-	if (!viewer.dxf.drawings[plan.name]) viewer.dxf.newDrawing(plan.name);
-
-	// Get the IDs of all the items to draw
-	const ids = storey.children.map(item => item.expressID);
-
-	// If no items to draw in this layer in this floor plan, let's continue
-	if (!ids.length) return;
-
-	// If there are items, extract its geometry
-	const subset = viewer.IFC.loader.ifcManager.createSubset({
-		modelID,
-		ids,
-		removePrevious: true,
-		customID: 'floor_plan_generation',
-		material: dummySubsetMat,
-	});
-
-	// Get the projection of the items in this floor plan
-	const filteredPoints = [];
-	const edges = await viewer.edgesProjector.projectEdges(subset);
-	const positions = edges.geometry.attributes.position.array;
-
-	// Lines shorter than this won't be rendered
-	const tolerance = 0.01;
-	for (let i = 0; i < positions.length - 5; i += 6) {
-
-		const a = positions[i] - positions[i + 3];
-		// Z coords are multiplied by -1 to match DXF Y coordinate
-		const b = -positions[i + 2] + positions[i + 5];
-
-		const distance = Math.sqrt(a * a + b * b);
-
-		if (distance > tolerance) {
-			filteredPoints.push([positions[i], -positions[i + 2], positions[i + 3], -positions[i + 5]]);
-		}
-
-	}
-
-	// Draw the projection of the items
-	viewer.dxf.drawEdges(plan.name, filteredPoints, 'Projection', Drawing.ACI.BLUE, 'CONTINUOUS');
-
-	// Clean up
-	edges.geometry.dispose();
-
-
-	// Draw all sectioned items. thick and thin are the default layers created by IFC.js
-		viewer.dxf.drawNamedLayer(plan.name, plan, 'thick', 'Section', Drawing.ACI.RED, 'CONTINUOUS');
-		viewer.dxf.drawNamedLayer(plan.name, plan, 'thin', 'Section_Secondary', Drawing.ACI.CYAN, 'CONTINUOUS');
-
-	// Download the generated floorplan
-	const result = viewer.dxf.exportDXF(plan.name);
-	const link = document.createElement('a');
-	link.download = 'floorplan.dxf';
-	link.href = URL.createObjectURL(result);
-	document.body.appendChild(link);
-	link.click();
-	link.remove();
+  async function drawProjectedItems(storey, plan, modelID) {
+  
+    // Create a new drawing (if it doesn't exist)
+    if (!viewer.dxf.drawings[plan.name]) viewer.dxf.newDrawing(plan.name);
+  
+    // Get the IDs of all the items to draw
+    const ids = storey.children.map(item => item.expressID);
+  
+    // If no items to draw in this layer in this floor plan, let's continue
+    if (!ids.length) return;
+  
+    // If there are items, extract its geometry
+    const subset = viewer.IFC.loader.ifcManager.createSubset({
+      modelID,
+      ids,
+      removePrevious: true,
+      customID: 'floor_plan_generation',
+      material: dummySubsetMat,
+    });
+  
+    // Get the projection of the items in this floor plan
+    const filteredPoints = [];
+    const edges = await viewer.edgesProjector.projectEdges(subset);
+    const positions = edges.geometry.attributes.position.array;
+  
+    // Lines shorter than this won't be rendered
+    const tolerance = 0.01;
+    for (let i = 0; i < positions.length - 5; i += 6) {
+  
+      const a = positions[i] - positions[i + 3];
+      // Z coords are multiplied by -1 to match DXF Y coordinate
+      const b = -positions[i + 2] + positions[i + 5];
+  
+      const distance = Math.sqrt(a * a + b * b);
+  
+      if (distance > tolerance) {
+        filteredPoints.push([positions[i], -positions[i + 2], positions[i + 3], -positions[i + 5]]);
+      }
+  
+    }
+  
+    // Draw the projection of the items
+    viewer.dxf.drawEdges(plan.name, filteredPoints, 'Projection', Drawing.ACI.BLUE, 'CONTINUOUS');
+  
+    // Clean up
+    edges.geometry.dispose();
+  
+  
+    // Draw all sectioned items
+      viewer.dxf.drawNamedLayer(plan.name, plan, 'thick', 'Section', Drawing.ACI.RED, 'CONTINUOUS');
+      viewer.dxf.drawNamedLayer(plan.name, plan, 'thin', 'Section_Secondary', Drawing.ACI.CYAN, 'CONTINUOUS');
+  
+    const result = viewer.dxf.exportDXF(plan.name);
+    const link = document.createElement('a');
+    link.download = 'floorplan.dxf';
+    link.href = URL.createObjectURL(result);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
-}
- 
-
 
 function toogleShadow(active){
   const shadows = Object.values(viewer.shadowDropper.shadows);
@@ -169,7 +167,7 @@ function toogleShadow(active){
   }
 }
 
-loadIfc('./01.ifc'); 
+loadIfc('./02.ifc'); 
 
 function togglePostProduction(active) {
   viewer.context.renderer.postProduction.active = active;
