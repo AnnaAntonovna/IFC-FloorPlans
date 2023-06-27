@@ -1,23 +1,28 @@
 {
-    "name": "wivifc",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "type": "module",
-    "scripts": {
-        "build": "rollup -c",
-        "watch": "rollup -c -w"
-    },
-    "devDependencies": {
-        "@rollup/plugin-commonjs": "^25.0.2",
-        "@rollup/plugin-node-resolve": "^15.1.0",
-        "npm": "^9.7.1",
-        "rollup": "^3.25.1"
-    },
-    "dependencies": {
-        "camera-controls": "^2.4.2",
-        "dxf-writer": "^1.18.4",
-        "three": "^0.135.0",
-        "web-ifc-viewer": "^1.0.216"
-    }
+  "name": "wivifc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.2",
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "npm": "^9.7.1",
+    "rollup": "^3.25.1"
+  },
+  "dependencies": {
+    "camera-controls": "^2.4.2",
+    "dxf-writer": "^1.18.4",
+    "three": "^0.135.0",
+    "web-ifc": "^0.0.35",
+    "web-ifc-three": "^0.0.118",
+    "web-ifc-viewer": "^1.0.207"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }
