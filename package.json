@@ -17,9 +17,9 @@
     "camera-controls": "^2.4.2",
     "dxf-writer": "^1.18.4",
     "three": "^0.135.0",
-    "web-ifc": "^0.0.35",
+    "web-ifc": "^0.0.39",
     "web-ifc-three": "^0.0.118",
-    "web-ifc-viewer": "^1.0.207"
+    "web-ifc-viewer": "^1.0.217"
   },
   "keywords": [],
   "author": "",
